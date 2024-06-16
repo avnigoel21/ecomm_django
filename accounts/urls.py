@@ -5,5 +5,5 @@ from accounts.views import *
 urlpatterns = [
     path('login/', login_page),
     path('register/', register_page),
-    path('activate/<email_token>',activate_email)
+    path('activate/<email_token>/',activate_email)
 ]
