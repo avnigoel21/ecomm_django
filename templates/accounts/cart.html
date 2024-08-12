@@ -24,9 +24,9 @@
     <tr>
         <td>
             <figure class="itemside">
-                <div class="aside"><img src="/media/{{cart_item.product.product_images.first}}" class="img-sm"></div>
+                <div class="aside"><img src="/media/{{cart_item.product.product_images.first.image}}" class="img-sm"></div>
                 <figcaption class="info">
-                    <a href="#" class="title text-dark">some</a>
+                    <a href="#" class="title text-dark">{{cart_item.product.product_name}}</a>
                     {% if cart_item.size_variant %}
                     <p class="text-muted small">Size: {{cart_item.size_variant.size_name}} <br> Brand: Gucci</p>
                     {% endif %}
@@ -84,6 +84,9 @@
                             </span>
                         </div>
                     </div>
+                    {% if cart.coupon  %}
+                    <a href="{% url 'remove_coupon' cart.uid  %}" class="btn btn-success">{{cart.coupon.coupon_code}}</a>
+                    {% endif %}
                 </form>
                 </div> <!-- card-body.// -->
             </div>  <!-- card .// -->

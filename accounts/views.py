@@ -33,9 +33,6 @@ def login_page(request):
         return HttpResponseRedirect(request.path_info)
     return render(request, 'accounts/login.html')
 
-
-
-
 def register_page(request):
     
     if request.method == "POST":
@@ -68,7 +65,6 @@ def activate_email(request, email_token):
         return HttpResponse("Invalid Email Token")
     
 
-
 def add_to_cart(request, uid):
     variant = request.GET.get('variant')
     product = Product.objects.get(uid = uid)
@@ -88,7 +84,21 @@ def add_to_cart(request, uid):
     
 
 def remove_cart(request, cart_item_uid):
-    pass
+    try:
+        cart_item = CartItems.objects.get(uid = cart_item_uid)
+        cart_item.delete()
+    except Exception as e:
+        print(e)
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER') )
+
+
+def remove_coupon(request, cart_id):
+    cart = Cart.objects.get(uid = cart_id)
+    cart.coupon = None
+    cart.save()
+    messages.success(request, "Coupon Removed.")
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER') )
 
 
 def cart(request):
@@ -106,12 +116,12 @@ def cart(request):
             messages.warning(request, "Coupon already exists.")
             return HttpResponseRedirect(request.META.get('HTTP_REFERER') )
         
-        if cart_obj.get_cart_total() < coupon_obj.minimum_amount:
-            messages.warning(request, "Amount should be greater than", coupon_obj.minimum_amount)
+        if cart_obj.get_cart_total() < coupon_obj[0].minimum_amount:
+            messages.warning(request, f"Amount should be greater than {coupon_obj[0].minimum_amount}")
             return HttpResponseRedirect(request.META.get('HTTP_REFERER') )
 
 
-        if coupon_obj.is_expired:
+        if coupon_obj[0].is_expired:
             messages.warning(request, "Coupon Expired.")
             return HttpResponseRedirect(request.META.get('HTTP_REFERER') )
         
