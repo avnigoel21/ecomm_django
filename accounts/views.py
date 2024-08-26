@@ -4,8 +4,14 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 
+from ecomm import settings
 from products.models import Coupon, Product, SizeVariant
 from .models import Cart, CartItems, Profile
+
+import razorpay
+
+
+
 # Create your views here.
 
 def login_page(request):
@@ -102,7 +108,11 @@ def remove_coupon(request, cart_id):
 
 
 def cart(request):
-    cart_obj =  Cart.objects.get(is_paid = False, user = request.user)
+    cart_obj = None;
+    try:
+        cart_obj =  Cart.objects.get(is_paid = False, user = request.user)
+    except Exception as e:
+        print(e)
 
     if request.method == "POST":
         coupon = request.POST.get('coupon')
@@ -129,6 +139,25 @@ def cart(request):
         cart_obj.save()
         messages.success(request, "Coupon Applied.")
         return HttpResponseRedirect(request.META.get('HTTP_REFERER') )
-        
-    context = {'cart' : cart_obj}
+    
+    if cart_obj:
+        client = razorpay.Client(auth = (settings.key_id, settings.key_secret))
+        payment = client.order.create({'amount' : cart_obj.get_cart_total() * 100 , 'currency' : 'INR', 'payment_capture' : 1 })
+        cart_obj.razor_pay_order_id = payment['id']
+        cart_obj.save()
+
+        print("***************")
+        print(payment)
+        print("***************")
+
+    payment = None
+    context = {'cart' : cart_obj, 'payment' : payment}
     return render(request, "accounts/cart.html", context)
+
+
+def success(request):
+    order_id = request.GET.get('order_id')
+    cart = Cart.objects.get(razor_pay_order_id = order_id)
+    cart.is_paid = True
+    cart.save()
+    return HttpResponse('Payment Success')
